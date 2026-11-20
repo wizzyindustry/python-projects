@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="form-box">
+    <h2>✍️ Write a New Post</h2>
+
+    <form action="/create" method="POST">
+        <label>Post Title</label>
+        <input type="text" name="title" placeholder="Enter post title..." required>
+
+        <label>Content</label>
+        <textarea name="content" rows="10" placeholder="Write your post here..." required></textarea>
+
+        <button type="submit">Publish Post 🚀</button>
+    </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - LeagueHub{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+<h2>My Leagues</h2>
+<button class="btn btn-teal" data-bs-toggle="modal" data-bs-target="#newLeague">+ New League</button>
+</div>
+{% if leagues %}
+<div class="row g-4">
+{% for lg in leagues %}
+<div class="col-md-4">
+<div class="card p-4">
+<h5 class="fw-bold">{{lg.name}}</h5>
+<p class="text-muted small mb-3">{{lg.teams|length}} teams · {{lg.matches|length}} matches</p>
+<div class="d-flex gap-2">
+<a href="{{ url_for('main.league_detail', pk=lg.id) }}" class="btn btn-sm btn-teal">Open</a>
+<form method="post" action="{{ url_for('main.delete_league', pk=lg.id) }}" onsubmit="return confirm('Delete this league?')"><button class="btn btn-sm btn-outline-danger">Delete</button></form>
+</div>
+</div>
+</div>
+{% endfor %}
+</div>
+{% else %}
+<div class="card p-5 text-center text-muted">No leagues yet. Create your first one!</div>
+{% endif %}
+<div class="modal fade" id="newLeague"><div class="modal-dialog"><div class="modal-content">
+<div class="modal-header"><h5 class="modal-title">New League</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+<form method="post">{{form.hidden_tag()}}<div class="modal-body">
+<div class="mb-3"><label class="form-label">League Name</label>{{form.name(class="form-control", placeholder="League name")}}</div>
+</div>
+<div class="modal-footer"><button class="btn btn-teal" type="submit">Create</button></div></form>
+</div></div></div>
+{% endblock %}

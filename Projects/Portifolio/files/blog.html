@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog — Wizzy inc</title>
+    <link rel="stylesheet" href="/style/main.css">
+    <link rel="manifest" href="/manifest.json">
+</head>
+<body>
+
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<div class="offline-overlay" id="offlineOverlay">
+    <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+    <h2>No Internet Connection</h2>
+    <p>It looks like you're offline. Check your connection and try again.</p>
+    <button class="retry-btn" onclick="location.reload()">Try Again</button>
+</div>
+
+<header class="app-bar">
+    <a href="/home.html" class="app-bar__brand" data-nav="home.html" aria-label="Wizzy inc home">Wizzy inc</a>
+    <nav class="app-bar__nav" aria-label="Primary">
+        <a href="/home.html" class="app-bar__link" data-nav="home.html">Home</a>
+        <a href="/files/projects.html" class="app-bar__link" data-nav="projects.html">Projects</a>
+        <a href="/files/about.html" class="app-bar__link" data-nav="about.html">About</a>
+        <a href="/files/blog.html" class="app-bar__link" data-nav="blog.html">Blog</a>
+    </nav>
+    <div class="app-bar__actions">
+        <button class="icon-btn theme-toggle" aria-label="Toggle theme" type="button">
+            <svg class="icon-sun" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <button class="icon-btn search-btn" onclick="openSearch()" aria-label="Search" type="button">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <button class="app-bar__hamburger" id="hamburgerBtn" aria-label="Menu" type="button">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</header>
+
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<div class="drawer" id="drawer">
+    <a href="/home.html" data-nav="home.html">Home</a>
+    <a href="/files/projects.html" data-nav="projects.html">Projects</a>
+    <a href="/files/about.html" data-nav="about.html">About</a>
+    <a href="/files/blog.html" data-nav="blog.html">Blog</a>
+</div>
+
+<section class="section" style="padding-bottom:0;">
+    <p class="section-subtitle">Insights &amp; Stories</p>
+    <h2 class="section-title">The Wizzy Blog</h2>
+</section>
+
+<div class="blog-tag-filters" id="blogTagFilters">
+    <button class="blog-tag-filter active" data-tag="all">All</button>
+</div>
+
+<div class="blog-list">
+    <div class="blog-preview-grid"></div>
+</div>
+
+<div class="guestbook-section">
+    <h3>Leave a Comment</h3>
+    <form class="guestbook-form" id="guestbookForm">
+        <label for="gbName">Your name</label>
+        <input type="text" id="gbName" placeholder="Your name" required>
+        <label for="gbMsg">Your comment</label>
+        <textarea id="gbMsg" rows="3" placeholder="Write your comment..." required></textarea>
+        <button type="submit">Post Comment</button>
+    </form>
+    <div class="guestbook-entries" id="guestbookEntries"></div>
+</div>
+
+<nav class="bottom-nav" aria-label="Primary mobile">
+    <a href="/home.html" class="bottom-nav__tab" data-nav="home.html" aria-label="Home">
+        <svg class="bottom-nav__icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span class="bottom-nav__label">Home</span>
+        <span class="bottom-nav__badge"></span>
+    </a>
+    <a href="/files/projects.html" class="bottom-nav__tab" data-nav="projects.html" aria-label="Projects" aria-haspopup="dialog">
+        <svg class="bottom-nav__icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span class="bottom-nav__label">Projects</span>
+        <span class="bottom-nav__badge"></span>
+    </a>
+    <a href="/files/about.html" class="bottom-nav__tab" data-nav="about.html" aria-label="About">
+        <svg class="bottom-nav__icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span class="bottom-nav__label">About</span>
+        <span class="bottom-nav__badge"></span>
+    </a>
+    <a href="/files/blog.html" class="bottom-nav__tab" data-nav="blog.html" aria-label="Blog">
+        <svg class="bottom-nav__icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span class="bottom-nav__label">Blog</span>
+        <span class="bottom-nav__badge"></span>
+    </a>
+    <span class="bottom-nav__indicator" aria-hidden="true"></span>
+</nav>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<footer>
+    <div class="footer-social">
+        <a href="#" aria-label="GitHub">
+            <img src="../icons/github-brands-solid-full.svg" alt="GitHub" width="22" height="22">
+            <span>GitHub</span>
+            <p>GitHub</p>
+        </a>
+        <a href="#" aria-label="LinkedIn">
+            <img src="../icons/linkedin-brands-solid-full.svg" alt="LinkedIn" width="22" height="22">
+            <span>LinkedIn</span>
+            <p>LinkedIn</p>
+        </a>
+        <a href="#" aria-label="WhatsApp">
+            <img src="../icons/whatsapp-brands-solid-full.svg" alt="WhatsApp" width="22" height="22">
+            <span>WhatsApp</span>
+            <p>WhatsApp</p>
+        </a>
+    </div>
+    <div class="newsletter-label">Stay in the loop</div>
+    <form class="newsletter-form" id="newsletterForm" method="POST">
+        <label for="newsletterEmail" class="sr-only">Email address</label>
+        <input type="email" id="newsletterEmail" name="email" placeholder="your@email.com" required>
+        <input type="hidden" name="_subject" value="Newsletter Signup">
+        <button type="submit">Subscribe</button>
+    </form>
+    &copy; 2025 Wizzy inc. All rights reserved.
+    <div class="visitor-count">Visitors: <span id="visits">0</span> &middot; <a href="admin.html" style="color:var(--muted);text-decoration:none;font-size:0.75rem;">Admin</a></div>
+</footer>
+
+<!-- Blog modal -->
+<div class="modal-overlay" id="blogModal" onclick="if(event.target===this)closeBlogModal()">
+    <div class="modal-panel blog-modal-panel">
+        <button class="modal-close" onclick="closeBlogModal()">&times;</button>
+        <div id="blogModalContent"></div>
+    </div>
+</div>
+
+<script src="firebase-config.js"></script>
+<script src="data-loader.js"></script>
+<script src="settings-loader.js"></script>
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js');}</script>
+<script>
+    if (!navigator.onLine) {
+        document.getElementById('offlineOverlay').classList.add('show');
+    }
+    window.addEventListener('online', () => { document.getElementById('offlineOverlay').classList.remove('show'); location.reload(); });
+    window.addEventListener('offline', () => {
+        document.getElementById('offlineOverlay').classList.add('show');
+    });
+    const toggle = document.querySelector('.theme-toggle');
+    const html = document.documentElement;
+    function applyTheme(t) { if (t === 'light') html.setAttribute('data-theme', 'light'); else html.removeAttribute('data-theme'); }
+    const saved = localStorage.getItem('theme');
+    if (saved) applyTheme(saved);
+    else if (window.matchMedia('(prefers-color-scheme: light)').matches) applyTheme('light');
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (e) => { if (!localStorage.getItem('theme')) applyTheme(e.matches ? 'light' : null); });
+    toggle.addEventListener('click', () => {
+        const current = html.getAttribute('data-theme');
+        const next = current === 'light' ? null : 'light';
+        if (next) { html.setAttribute('data-theme', next); localStorage.setItem('theme', next); }
+        else { html.removeAttribute('data-theme'); localStorage.removeItem('theme'); }
+    });
+    document.addEventListener('keydown', (e) => { if (e.ctrlKey && e.altKey && (e.key === 't' || e.key === 'T')) { e.preventDefault(); toggle.click(); } });
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('revealed'); observer.unobserve(entry.target); } });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    const progressBar = document.getElementById('scrollProgress');
+    window.addEventListener('scroll', () => {
+        const h = document.documentElement.scrollHeight - window.innerHeight;
+        progressBar.style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + '%';
+    });
+
+    let visits = parseInt(localStorage.getItem('visitorCount') || '0') + 1;
+    localStorage.setItem('visitorCount', visits);
+    var visitsEl = document.getElementById('visits');
+    if (visitsEl) visitsEl.textContent = visits;
+
+    function showToast(msg, type) {
+        const c = document.getElementById('toastContainer');
+        const el = document.createElement('div');
+        el.className = 'toast ' + type;
+        el.textContent = msg;
+        c.appendChild(el);
+        setTimeout(() => { el.classList.add('removing'); setTimeout(() => el.remove(), 300); }, 3500);
+    }
+
+    // Guestbook
+    const GB_KEY = 'wizzyGuestbook';
+    function loadGuestbook() {
+        try { return JSON.parse(localStorage.getItem(GB_KEY) || '[]'); } catch { return []; }
+    }
+    function saveGuestbook(entries) { localStorage.setItem(GB_KEY, JSON.stringify(entries)); }
+    function renderGuestbook() {
+        const container = document.getElementById('guestbookEntries');
+        if (!container) return;
+        const entries = loadGuestbook();
+        if (!entries.length) { container.innerHTML = '<p style="color:var(--muted);font-size:0.85rem">No comments yet. Be the first!</p>'; return; }
+        container.innerHTML = entries.slice().reverse().map(e =>
+            '<div class="guestbook-entry"><div class="gb-head"><span class="gb-name">' + esc(e.name) + '</span><span class="gb-date">' + esc(e.date) + '</span></div><div class="gb-msg">' + esc(e.msg) + '</div></div>'
+        ).join('');
+    }
+    function esc(s) { if (typeof s !== 'string') return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    document.getElementById('guestbookForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const name = document.getElementById('gbName').value.trim();
+        const msg = document.getElementById('gbMsg').value.trim();
+        if (!name || !msg) return;
+        const entries = loadGuestbook();
+        entries.push({ name, msg, date: new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) });
+        saveGuestbook(entries);
+        renderGuestbook();
+        document.getElementById('gbName').value = '';
+        document.getElementById('gbMsg').value = '';
+        showToast('Comment posted!', 'success');
+    });
+    renderGuestbook();
+
+</script>
+
+<!-- Search overlay -->
+<div class="search-overlay" id="searchOverlay" onclick="if(event.target===this)closeSearch()">
+    <button class="search-close" onclick="closeSearch()">&times;</button>
+    <div class="search-input-wrap">
+        <input type="text" id="searchInput" placeholder="Search projects & blog posts..." oninput="runSearch(this.value)" autofocus>
+    </div>
+    <div class="search-results" id="searchResults"></div>
+</div>
+
+</body>
+</html>

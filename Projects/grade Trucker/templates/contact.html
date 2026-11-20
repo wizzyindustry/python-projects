@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="form-box">
+    <h2>Get In Touch 👋</h2>
+    <p>Fill in the form below and we'll get back to you!</p>
+
+    <form action="/submit" method="POST">
+
+        <label>Your Name</label>
+        <input type="text" name="name" placeholder="John Doe" required>
+
+        <label>Your Email</label>
+        <input type="email" name="email" placeholder="john@email.com" required>
+
+        <label>Your Message</label>
+        <textarea name="message" rows="5" placeholder="Write your message here..." required></textarea>
+
+        <button type="submit">Send Message 🚀</button>
+
+    </form>
+</div>
+
+{% endblock %}

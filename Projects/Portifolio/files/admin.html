@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Wizzy inc</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙</text></svg>">
+<style>
+:root { --bg: #0a0a0a; --surface: #111; --accent: #fff; --text: #e0e0e0; --muted: #888; --gold: #d4a017; --radius: 10px; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+input, select, textarea, button { font-family: inherit; }
+
+/* Login */
+#loginScreen {
+    position: fixed; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+    background: var(--bg); z-index: 9999;
+}
+#loginScreen h2 { color: var(--accent); font-size: 1.8rem; }
+#loginScreen input {
+    padding: 12px 18px; border-radius: var(--radius); border: 1px solid #333;
+    background: var(--surface); color: var(--accent); font-size: 1rem; width: 260px; outline: none;
+}
+#loginScreen input:focus { border-color: var(--gold); }
+#loginBtn {
+    padding: 12px 36px; border-radius: var(--radius); border: none;
+    background: var(--gold); color: #0a0a0a; font-weight: 700; font-size: 1rem; cursor: pointer;
+}
+#loginError { color: #e74c3c; font-size: 0.85rem; min-height: 1.2em; }
+
+/* Header */
+.admin-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px; background: var(--surface); border-bottom: 1px solid #222;
+    position: sticky; top: 0; z-index: 999;
+}
+.admin-header h1 { font-size: 1.2rem; color: var(--gold); }
+.admin-header .user-badge { font-size: 0.8rem; color: var(--muted); }
+.hamburger {
+    display: none; background: none; border: none; color: var(--accent);
+    cursor: pointer; padding: 4px;
+}
+.logout-btn {
+    padding: 6px 16px; border-radius: 6px; border: 1px solid #333;
+    background: transparent; color: var(--muted); cursor: pointer; font-size: 0.8rem;
+}
+.logout-btn:hover { border-color: #e74c3c; color: #e74c3c; }
+
+/* Sidebar */
+.sidebar {
+    position: fixed; top: 0; left: -260px; width: 240px; height: 100vh;
+    background: #151515; border-right: 1px solid #222;
+    z-index: 9997; display: flex; flex-direction: column;
+    transition: left 0.3s ease; padding-top: 60px;
+}
+.sidebar.open { left: 0; }
+.sidebar button {
+    padding: 14px 24px; border: none; background: transparent;
+    color: var(--muted); cursor: pointer; font-size: 0.9rem;
+    text-align: left; transition: all 0.2s; border-left: 3px solid transparent;
+}
+.sidebar button:hover { color: var(--accent); background: #1e1e1e; }
+.sidebar button.active { color: var(--gold); border-left-color: var(--gold); background: #1e1e1e; }
+.sidebar-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 9996; display: none;
+}
+.sidebar-overlay.open { display: block; }
+
+/* Nav tabs */
+.nav-tabs {
+    display: flex; gap: 2px; background: var(--bg);
+    padding: 0 24px; border-bottom: 1px solid #222; overflow-x: auto;
+}
+.nav-tabs button {
+    padding: 12px 20px; border: none; background: transparent;
+    color: var(--muted); cursor: pointer; font-size: 0.85rem;
+    border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.2s;
+}
+.nav-tabs button:hover { color: var(--accent); }
+.nav-tabs button.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* Sections */
+.section { display: none; padding: 24px; max-width: 1000px; margin: 0 auto; }
+.section.active { display: block; }
+.section h2 { font-size: 1.4rem; margin-bottom: 20px; color: var(--accent); }
+
+/* Dashboard cards */
+.dash-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 30px; }
+.dash-card {
+    background: var(--surface); border: 1px solid #1e1e1e; border-radius: var(--radius);
+    padding: 24px; text-align: center;
+}
+.dash-card .num { font-size: 2.2rem; font-weight: 800; color: var(--gold); }
+.dash-card .label { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+
+/* Tables / lists */
+.table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.data-table { width: 100%; border-collapse: collapse; min-width: 500px; }
+.data-table th, .data-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #1e1e1e; font-size: 0.85rem; white-space: nowrap; }
+.data-table th { color: var(--muted); font-weight: 600; }
+.data-table td { color: var(--text); }
+.data-table .actions { display: flex; gap: 6px; white-space: nowrap; }
+.data-table .actions button {
+    padding: 4px 10px; border-radius: 4px; border: 1px solid #333;
+    background: transparent; color: var(--muted); cursor: pointer; font-size: 0.75rem;
+}
+.data-table .actions .edit-btn:hover { border-color: var(--gold); color: var(--gold); }
+.data-table .actions .del-btn:hover { border-color: #e74c3c; color: #e74c3c; }
+.data-table .actions .move-btn { padding: 2px 6px; font-size: 0.65rem; line-height: 1; border-color: #444; }
+.data-table .actions .move-btn:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+.data-table .actions .move-btn:disabled { opacity: 0.3; cursor: default; }
+
+/* Pagination */
+.pagination { display: inline-flex; gap: 4px; align-items: center; }
+.page-btn { padding: 4px 10px; border-radius: 4px; border: 1px solid #333; background: transparent; color: var(--muted); cursor: pointer; font-size: 0.75rem; }
+.page-btn:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+.page-btn.active { background: var(--gold); color: #000; border-color: var(--gold); font-weight: 600; }
+.page-btn:disabled { opacity: 0.3; cursor: default; }
+
+/* Rich text editor toolbar */
+.editor-toolbar { display: flex; gap: 4px; flex-wrap: wrap; padding: 6px 8px; background: #222; border: 1px solid #333; border-bottom: none; border-radius: 6px 6px 0 0; }
+.editor-toolbar button { padding: 4px 10px; border-radius: 3px; border: 1px solid #444; background: transparent; color: var(--muted); cursor: pointer; font-size: 0.75rem; line-height: 1.4; }
+.editor-toolbar button:hover { border-color: var(--gold); color: var(--gold); }
+.editor-toolbar .sep { width: 1px; background: #444; margin: 2px 4px; }
+.editor-content { min-height: 200px; max-height: 400px; overflow-y: auto; padding: 10px 12px; background: #111; border: 1px solid #333; border-radius: 0 0 6px 6px; color: var(--text); font-size: 0.9rem; line-height: 1.7; outline: none; }
+.editor-content:focus { border-color: var(--gold); }
+.editor-content h2 { font-size: 1.3rem; margin: 12px 0 6px; color: var(--accent); }
+.editor-content h3 { font-size: 1.1rem; margin: 10px 0 4px; color: var(--accent); }
+.editor-content p { margin: 6px 0; }
+.editor-content ul, .editor-content ol { margin: 6px 0; padding-left: 24px; }
+.editor-content blockquote { border-left: 3px solid var(--gold); margin: 8px 0; padding: 6px 12px; background: #1a1a1a; border-radius: 0 4px 4px 0; font-style: italic; }
+.editor-content pre { background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 10px; overflow-x: auto; font-family: monospace; font-size: 0.8rem; }
+.editor-content img { max-width: 100%; border-radius: 4px; margin: 8px 0; }
+
+.empty-msg { color: var(--muted); font-size: 0.9rem; padding: 40px 0; text-align: center; }
+
+/* Forms */
+.form-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+    display: none; align-items: center; justify-content: center; z-index: 9998;
+    padding: 20px;
+}
+.form-overlay.open { display: flex; }
+.form-panel {
+    background: #1a1a1a; border: 1px solid #333; border-radius: 14px;
+    padding: 28px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+}
+
+/* Preview modal */
+.preview-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
+.preview-overlay.open { display: flex; }
+.preview-panel { background: #1a1a1a; border: 1px solid #333; border-radius: 14px; padding: 28px; width: 100%; max-width: 700px; max-height: 85vh; overflow-y: auto; position: relative; }
+.preview-close { position: absolute; top: 10px; right: 14px; background: none; border: none; color: var(--muted); font-size: 1.6rem; cursor: pointer; line-height: 1; }
+.preview-close:hover { color: var(--gold); }
+.preview-panel h1 { font-size: 1.5rem; color: var(--accent); margin-bottom: 6px; }
+.preview-panel .meta { color: var(--muted); font-size: 0.8rem; margin-bottom: 16px; }
+.preview-panel img { max-width: 100%; border-radius: 8px; margin: 12px 0; }
+.preview-panel p { line-height: 1.7; margin: 8px 0; }
+.preview-panel ul, .preview-panel ol { padding-left: 24px; margin: 8px 0; }
+.preview-panel blockquote { border-left: 3px solid var(--gold); margin: 12px 0; padding: 8px 16px; background: #222; border-radius: 0 6px 6px 0; font-style: italic; }
+.preview-panel pre { background: #111; border: 1px solid #333; border-radius: 6px; padding: 12px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; }
+.preview-panel h2 { font-size: 1.3rem; margin: 20px 0 8px; color: var(--accent); }
+.preview-panel h3 { font-size: 1.1rem; margin: 16px 0 6px; color: var(--accent); }
+.form-panel h3 { font-size: 1.1rem; margin-bottom: 16px; color: var(--accent); }
+.form-panel label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
+.form-panel input, .form-panel select, .form-panel textarea {
+    width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #333;
+    background: #111; color: var(--accent); font-size: 0.9rem; outline: none;
+    margin-bottom: 14px;
+}
+.form-panel input:focus, .form-panel select:focus, .form-panel textarea:focus { border-color: var(--gold); }
+.form-panel textarea { min-height: 80px; resize: vertical; }
+.form-panel .form-row { display: flex; gap: 12px; }
+.form-panel .form-row > * { flex: 1; }
+.form-panel .form-actions { display: flex; gap: 10px; margin-top: 6px; }
+.form-panel .form-actions button {
+    padding: 10px 24px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 0.9rem;
+}
+.form-panel .save-btn { background: var(--gold); color: #0a0a0a; }
+.form-panel .cancel-btn { background: #222; color: var(--muted); }
+.form-panel .save-btn:hover { opacity: 0.85; }
+
+/* Toast */
+.toast {
+    position: fixed; bottom: 30px; right: 30px; padding: 12px 24px;
+    border-radius: 10px; background: var(--surface); border: 1px solid #333;
+    color: var(--accent); font-size: 0.85rem; z-index: 99999;
+    opacity: 0; transform: translateY(10px); transition: all 0.3s;
+    pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { border-color: #27ae60; }
+.toast.error { border-color: #e74c3c; }
+
+/* Settings */
+.settings-section { margin-bottom: 24px; }
+.settings-section h3 { font-size: 1rem; color: var(--accent); margin-bottom: 10px; }
+.settings-section p { font-size: 0.85rem; color: var(--muted); margin-bottom: 10px; }
+
+.pwd-row { display: flex; gap: 10px; align-items: center; }
+.pwd-row input { padding: 10px 14px; border-radius: 8px; border: 1px solid #333; background: #111; color: var(--accent); outline: none; flex: 1; }
+.pwd-row input:focus { border-color: var(--gold); }
+
+.btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+.btn-gold { background: var(--gold); color: #0a0a0a; }
+.btn-ghost { background: #222; color: var(--muted); border: 1px solid #333; }
+.btn-ghost:hover { border-color: var(--muted); }
+.btn-danger { background: #222; color: #e74c3c; border: 1px solid #333; }
+.btn-danger:hover { border-color: #e74c3c; }
+
+/* Skill chips */
+.chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 100px; background: #222; font-size: 0.8rem; color: var(--muted);
+}
+.chip .remove-chip { cursor: pointer; color: #e74c3c; font-weight: 700; font-size: 0.9rem; }
+.chip .remove-chip:hover { color: #ff6b6b; }
+
+.add-chip-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.add-chip-row input { flex: 1; margin-bottom: 0; }
+.add-chip-row button { padding: 8px 16px; border-radius: 8px; border: 1px solid #333; background: #222; color: var(--muted); cursor: pointer; }
+
+@media (max-width: 768px) {
+    .hamburger { display: block; }
+    .nav-tabs { display: none !important; }
+    .section { padding: 16px; }
+    .dash-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-panel { padding: 20px; }
+    .form-panel .form-row { flex-direction: column; gap: 0; }
+    .admin-header { padding: 12px 16px; }
+    .admin-header h1 { font-size: 1rem; }
+    .data-table { min-width: 600px; font-size: 0.8rem; }
+    .data-table th, .data-table td { padding: 8px 10px; }
+}
+
+@media (max-width: 480px) {
+    .dash-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .dash-card { padding: 16px; }
+    .dash-card .num { font-size: 1.6rem; }
+    .pwd-row { flex-direction: column; align-items: stretch; }
+    .pwd-row input { width: 100%; }
+    .pwd-row .btn { width: 100%; }
+    .settings-section .btn { width: 100%; }
+    .settings-section input[type="file"] { width: 100%; }
+    .data-table { min-width: 500px; font-size: 0.75rem; }
+    .data-table th, .data-table td { padding: 6px 8px; }
+}
+
+/* Filter tabs */
+.filter-tabs { display: flex; gap: 4px; }
+.filter-tabs .filter-btn {
+    padding: 6px 16px; border-radius: 6px; border: 1px solid #333;
+    background: transparent; color: var(--muted); cursor: pointer; font-size: 0.8rem;
+}
+.filter-tabs .filter-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(212,160,23,0.1); }
+.filter-tabs .filter-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* Submissions table */
+.sub-table tr.unread { border-left: 3px solid var(--gold); }
+.sub-table tr.read { border-left: 3px solid transparent; }
+.sub-table tr.sub-row { cursor: pointer; }
+.sub-table tr.sub-row:hover td { background: #1a1a1a; }
+
+/* Section transitions */
+.section { display: none; }
+.section.active { display: block; animation: fadeIn 0.25s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Loading spinner */
+.loading-spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #333; border-top-color: var(--gold); border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#fbLoading { display: none; align-items: center; gap: 6px; color: var(--muted); font-size: 0.85rem; margin-bottom: 10px; }
+#fbLoading.show { display: flex; }
+
+/* Keyboard nav hint */
+.kbd-hint { font-size: 0.75rem; color: var(--muted); margin-top: 8px; text-align: center; }
+.kbd-hint kbd { background: #222; padding: 2px 6px; border-radius: 4px; font-family: inherit; font-size: 0.7rem; border: 1px solid #333; }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="loginScreen">
+    <h2>⚙ Admin Panel</h2>
+    <p style="color:var(--muted);font-size:0.85rem">Wizzy inc — Content Manager</p>
+    <input type="password" id="pwdInput" placeholder="Enter admin password" autocomplete="off">
+    <button id="loginBtn" onclick="login()">Login</button>
+    <div id="loginError"></div>
+</div>
+
+<!-- Admin header -->
+<header class="admin-header" id="adminHeader" style="display:none">
+    <h1>⚙ Wizzy Admin</h1>
+    <button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <span class="user-badge" id="userBadge">Admin</span>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+</header>
+
+<!-- Nav tabs -->
+<nav class="nav-tabs" id="navTabs" style="display:none">
+    <button class="active" onclick="showSection('dashboard')">Dashboard</button>
+    <button onclick="showSection('projects')">Projects</button>
+    <button onclick="showSection('blogs')">Blog Posts</button>
+    <button onclick="showSection('testimonials')">Testimonials</button>
+    <button onclick="showSection('submissions')">Submissions</button>
+    <button onclick="showSection('services')">Services</button>
+    <button onclick="showSection('stats')">Stats</button>
+    <button onclick="showSection('settings')">Settings</button>
+</nav>
+
+<!-- Sidebar (mobile/tablet) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+<nav class="sidebar" id="sidebar">
+    <button class="active" onclick="showSection('dashboard');toggleSidebar()">Dashboard</button>
+    <button onclick="showSection('projects');toggleSidebar()">Projects</button>
+    <button onclick="showSection('blogs');toggleSidebar()">Blog Posts</button>
+    <button onclick="showSection('testimonials');toggleSidebar()">Testimonials</button>
+    <button onclick="showSection('submissions');toggleSidebar()">Submissions</button>
+    <button onclick="showSection('services');toggleSidebar()">Services</button>
+    <button onclick="showSection('stats');toggleSidebar()">Stats</button>
+    <button onclick="showSection('settings');toggleSidebar()">Settings</button>
+</nav>
+
+<!-- Dashboard -->
+<div class="section active" id="section-dashboard">
+    <h2>Dashboard</h2>
+    <div class="dash-grid">
+        <div class="dash-card"><div class="num" id="dashProjects">0</div><div class="label">Projects</div></div>
+        <div class="dash-card"><div class="num" id="dashBlogs">0</div><div class="label">Blog Posts</div></div>
+        <div class="dash-card"><div class="num" id="dashTestimonials">0</div><div class="label">Testimonials</div></div>
+        <div class="dash-card"><div class="num" id="dashSubmissions">0</div><div class="label">Submissions</div></div>
+        <div class="dash-card"><div class="num" id="dashServices">0</div><div class="label">Services</div></div>
+    </div>
+    <p style="color:var(--muted);font-size:0.85rem">All data synced across devices via Firebase. Configure in Settings.</p>
+</div>
+
+<!-- Projects -->
+<div class="section" id="section-projects">
+    <h2>Projects</h2>
+    <button class="btn btn-gold" onclick="openProjectForm()" style="margin-bottom:16px">+ Add Project</button>
+    <div id="projectsContainer"></div>
+</div>
+
+<!-- Blogs -->
+<div class="section" id="section-blogs">
+    <h2>Blog Posts</h2>
+    <button class="btn btn-gold" onclick="openBlogForm()" style="margin-bottom:16px">+ Add Blog Post</button>
+    <div id="blogsContainer"></div>
+</div>
+
+<!-- Testimonials -->
+<div class="section" id="section-testimonials">
+    <h2>Testimonials</h2>
+    <button class="btn btn-gold" onclick="openTestimonialForm()" style="margin-bottom:16px">+ Add Testimonial</button>
+    <div id="testimonialsContainer"></div>
+</div>
+
+<!-- Submissions -->
+<div class="section" id="section-submissions">
+    <h2>Contact & Newsletter Submissions</h2>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:16px">Form submissions from visitors are stored here. Click a row to expand, reply, or mark as read.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <div class="filter-tabs" id="subFilterTabs">
+            <button class="filter-btn active" data-filter="all" onclick="setSubFilter('all')">All</button>
+            <button class="filter-btn" data-filter="unread" onclick="setSubFilter('unread')">Unread</button>
+            <button class="filter-btn" data-filter="read" onclick="setSubFilter('read')">Read</button>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:6px">
+            <button class="btn btn-ghost" onclick="renderSubmissions()" title="Refresh">&#x21bb; Refresh</button>
+            <button class="btn btn-ghost" onclick="clearSubmissions()">Clear All</button>
+        </div>
+    </div>
+    <div id="submissionsContainer"></div>
+</div>
+
+<!-- Services -->
+<div class="section" id="section-services">
+    <h2>Services</h2>
+    <button class="btn btn-gold" onclick="openServiceForm()" style="margin-bottom:16px">+ Add Service</button>
+    <div id="servicesContainer"></div>
+</div>
+
+<!-- Stats -->
+<div class="section" id="section-stats">
+    <h2>Stats Counters</h2>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:16px">Edit the numbers shown on the home page stats row.</p>
+    <div class="form-panel" style="max-width:400px">
+        <label>Projects Count</label>
+        <input type="number" id="statProjects" value="0" min="0">
+        <label>Clients Count</label>
+        <input type="number" id="statClients" value="0" min="0">
+        <label>Years Count</label>
+        <input type="number" id="statYears" value="0" min="0">
+        <label>Awards Count</label>
+        <input type="number" id="statAwards" value="0" min="0">
+        <button class="btn btn-gold" onclick="saveStats()" style="margin-top:10px">Save Stats</button>
+    </div>
+</div>
+
+<!-- Settings -->
+<div class="section" id="section-settings">
+    <h2>Settings</h2>
+
+    <div class="settings-section" id="siteSettingsSection">
+        <h3>Site Settings</h3>
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:12px">Update values below — they apply across all frontend pages on next load.</p>
+
+        <div style="display:flex;flex-direction:column;gap:12px;max-width:500px">
+
+            <div style="padding:12px;border:1px solid #222;border-radius:8px">
+                <label style="font-size:0.85rem;color:var(--muted);display:block;margin-bottom:6px">Site Identity</label>
+                <input type="text" id="setSiteName" placeholder="Site Name" style="margin-bottom:6px">
+                <input type="text" id="setTagline" placeholder="Tagline" style="margin-bottom:6px">
+                <input type="text" id="setMetaDesc" placeholder="Meta Description (SEO)" style="margin-bottom:6px">
+                <button class="btn btn-gold" onclick="saveSiteInfo()" style="width:100%">Save Identity</button>
+            </div>
+
+            <div style="padding:12px;border:1px solid #222;border-radius:8px">
+                <label style="font-size:0.85rem;color:var(--muted);display:block;margin-bottom:6px">Social Links</label>
+                <div style="display:flex;gap:6px;margin-bottom:6px">
+                    <input type="text" id="setGithub" placeholder="GitHub URL" style="flex:1">
+                    <button class="btn btn-ghost" onclick="saveSocial('github')" style="white-space:nowrap">Save</button>
+                </div>
+                <div style="display:flex;gap:6px;margin-bottom:6px">
+                    <input type="text" id="setLinkedin" placeholder="LinkedIn URL" style="flex:1">
+                    <button class="btn btn-ghost" onclick="saveSocial('linkedin')" style="white-space:nowrap">Save</button>
+                </div>
+                <div style="display:flex;gap:6px">
+                    <input type="text" id="setWhatsapp" placeholder="WhatsApp URL" style="flex:1">
+                    <button class="btn btn-ghost" onclick="saveSocial('whatsapp')" style="white-space:nowrap">Save</button>
+                </div>
+            </div>
+
+            <div style="padding:12px;border:1px solid #222;border-radius:8px">
+                <label style="font-size:0.85rem;color:var(--muted);display:block;margin-bottom:6px">Resume PDF</label>
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+                    <input type="file" id="setResumeFile" accept=".pdf,application/pdf" style="flex:1">
+                    <button class="btn btn-ghost" onclick="uploadResume()" style="white-space:nowrap">Upload</button>
+                </div>
+                <div id="resumeStatus" style="font-size:0.8rem;color:var(--muted);margin-bottom:6px"></div>
+                <input type="text" id="setResume" placeholder="Or paste an external PDF URL">
+                <button class="btn btn-gold" onclick="saveResumeUrl()" style="width:100%;margin-top:6px">Save Resume URL</button>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="settings-section" id="firebaseSection">
+        <h3>Firebase Sync (cross-device)</h3>
+        <p>Firebase is pre-configured. To enable cross-device sync:
+        <ol style="font-size:0.85rem;color:var(--muted);margin:8px 0 12px 20px">
+            <li>Go to <a href="https://console.firebase.google.com/project/kingston-de40f/database/kingston-de40f-default-rtdb/rules" target="_blank" style="color:var(--gold)">Realtime Database Rules</a></li>
+            <li>Set rules to: <code style="background:#222;padding:2px 6px;border-radius:4px">{".read": true, ".write": true}</code> and click <b>Publish</b></li>
+            <li>Click <b>Test Connection</b> below to verify</li>
+        </ol>
+        </p>
+        <div id="firebaseStatus" style="font-size:0.85rem;margin-bottom:10px;color:var(--muted)">Not configured</div>
+        <div id="fbLoading"><span class="loading-spinner"></span>Syncing from Firebase...</div>
+        <div style="display:flex;flex-direction:column;gap:8px;max-width:500px">
+            <input type="text" id="fbApiKey" placeholder="apiKey">
+            <input type="text" id="fbAuthDomain" placeholder="authDomain">
+            <input type="text" id="fbProjectId" placeholder="projectId">
+            <input type="text" id="fbStorageBucket" placeholder="storageBucket">
+            <input type="text" id="fbMessagingSenderId" placeholder="messagingSenderId">
+            <input type="text" id="fbAppId" placeholder="appId">
+            <input type="text" id="fbDbUrl" placeholder="Database URL (leave default)">
+            <div style="display:flex;gap:8px">
+                <button class="btn btn-gold" onclick="saveFirebaseConfig()">Save Config</button>
+                <button class="btn btn-ghost" onclick="clearFirebaseConfig()">Disconnect</button>
+                <button class="btn btn-ghost" onclick="testFirebase()">Test Connection</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h3>Change Password</h3>
+        <div class="pwd-row">
+            <input type="password" id="newPwd" placeholder="New password">
+            <input type="password" id="confirmPwd" placeholder="Confirm password">
+            <button class="btn btn-gold" onclick="changePassword()">Update</button>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h3>Export Data</h3>
+        <p>Download all your content as a JSON file for backup.</p>
+        <button class="btn btn-gold" onclick="exportData()">Download JSON</button>
+    </div>
+
+    <div class="settings-section">
+        <h3>Import Data</h3>
+        <p>Restore content from a previously exported JSON file. This will replace all current data.</p>
+        <input type="file" id="importFile" accept=".json" style="margin-bottom:10px">
+        <button class="btn btn-ghost" onclick="importData()">Import JSON</button>
+    </div>
+
+    <div class="settings-section">
+        <h3>Reset All Data</h3>
+        <p>Clear all admin-managed content and start fresh. This cannot be undone.</p>
+        <button class="btn btn-danger" onclick="resetData()">Reset All Data</button>
+    </div>
+    <p class="kbd-hint">Keyboard shortcuts: <kbd>Ctrl+1-7</kbd> switch sections · <kbd>Enter</kbd> login · <kbd>Esc</kbd> close forms</p>
+</div>
+
+<!-- Form modals -->
+<div class="form-overlay" id="formOverlay">
+    <div class="form-panel" id="formPanel">
+        <h3 id="formTitle">Title</h3>
+        <div id="formBody"></div>
+        <div class="form-actions">
+            <button class="save-btn" onclick="saveForm()">Save</button>
+            <button class="btn btn-ghost" onclick="previewCurrent()" style="border-color:var(--gold);color:var(--gold)">Preview</button>
+            <button class="cancel-btn" onclick="closeForm()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div class="preview-overlay" id="previewOverlay" onclick="if(event.target===this)closePreview()">
+    <div class="preview-panel" id="previewPanel">
+        <button class="preview-close" onclick="closePreview()">&times;</button>
+        <div id="previewContent"></div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="firebase-config.js"></script>
+<script>
+// ===== DATA LAYER =====
+const STORAGE_KEY = 'wizzyAdminData';
+let data = loadData();
+let editingId = null;
+let editingType = null;
+let chipTemp = [];
+
+function defaultData() {
+    return {
+        projects: [],
+        blogs: [],
+        testimonials: [],
+        services: [],
+        stats: { projects: 0, clients: 0, years: 0, awards: 0 },
+        password: 'admin123',
+        settings: {
+            siteName: 'Wizzy inc',
+            tagline: 'We build modern digital experiences.',
+            github: '#',
+            linkedin: '#',
+            whatsapp: '#',
+            metaDesc: 'Portfolio of Wizzy inc — web development, graphic design, logos & posters.',
+            resumeUrl: ''
+        },
+        submissions: []
+    };
+}
+
+function loadData() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            // Merge with defaults to handle missing keys from older versions
+            const def = defaultData();
+            for (const k in def) { if (!(k in parsed)) parsed[k] = def[k]; }
+            return parsed;
+        }
+    } catch {}
+    return defaultData();
+}
+
+function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    // Sync to Firebase if configured (async, doesn't block)
+    if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isConfigured()) {
+        showLoading();
+        FirebaseSync.push(data).then(() => hideLoading()).catch(() => { hideLoading(); });
+    }
+}
+
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+// ===== RICH TEXT EDITOR =====
+function richEditorHtml(content) {
+    var safe = esc(content || '');
+    return `<div class="editor-toolbar">
+        <button type="button" onclick="execEdit('bold')" title="Bold"><b>B</b></button>
+        <button type="button" onclick="execEdit('italic')" title="Italic"><i>I</i></button>
+        <button type="button" onclick="execEdit('underline')" title="Underline"><u>U</u></button>
+        <span class="sep"></span>
+        <button type="button" onclick="execEdit('formatBlock','h2')" title="Heading 2">H2</button>
+        <button type="button" onclick="execEdit('formatBlock','h3')" title="Heading 3">H3</button>
+        <span class="sep"></span>
+        <button type="button" onclick="execEdit('insertUnorderedList')" title="List">&#8226;</button>
+        <button type="button" onclick="execEdit('insertOrderedList')" title="Numbered">1.</button>
+        <span class="sep"></span>
+        <button type="button" onclick="execEdit('createLink')" title="Insert Link">&#128279;</button>
+        <button type="button" onclick="execEdit('insertImage')" title="Insert Image">&#128247;</button>
+        <button type="button" onclick="execEdit('formatBlock','pre')" title="Code">&lt;/&gt;</button>
+        <button type="button" onclick="execEdit('formatBlock','blockquote')" title="Quote">&#10077;</button>
+    </div><div class="editor-content" id="fContentEditor" contenteditable="true">${safe}</div>`;
+}
+
+function execEdit(cmd, val) {
+    var editor = document.getElementById('fContentEditor');
+    if (!editor) return;
+    editor.focus();
+    if (cmd === 'createLink') {
+        var url = prompt('Enter link URL:', 'https://');
+        if (url) document.execCommand(cmd, false, url);
+    } else if (cmd === 'insertImage') {
+        var src = prompt('Enter image URL:', '');
+        if (src) document.execCommand(cmd, false, src);
+    } else if (cmd === 'formatBlock' && val === 'pre') {
+        document.execCommand('formatBlock', false, 'pre');
+    } else if (cmd === 'formatBlock' && (val === 'h2' || val === 'h3')) {
+        document.execCommand('formatBlock', false, val);
+    } else {
+        document.execCommand(cmd, false, val || null);
+    }
+}
+
+function getEditorContent() {
+    var editor = document.getElementById('fContentEditor');
+    return editor ? editor.innerHTML.trim() : '';
+}
+
+// ===== LOGIN =====
+function login() {
+    const input = document.getElementById('pwdInput');
+    const err = document.getElementById('loginError');
+    if (input.value === data.password) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('adminHeader').style.display = 'flex';
+        document.getElementById('navTabs').style.display = 'flex';
+        document.querySelector('.section.active').classList.remove('active');
+        document.getElementById('section-dashboard').classList.add('active');
+        renderAll();
+        input.value = '';
+        err.textContent = '';
+    } else {
+        err.textContent = 'Incorrect password';
+        input.value = '';
+        input.focus();
+    }
+}
+
+function logout() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('adminHeader').style.display = 'none';
+    document.getElementById('navTabs').style.display = 'none';
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('section-dashboard').classList.add('active');
+    document.querySelector('.nav-tabs .active')?.classList.remove('active');
+    document.querySelector('.nav-tabs button:first-child')?.classList.add('active');
+}
+
+document.getElementById('pwdInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
+
+// ===== NAVIGATION =====
+function showSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.nav-tabs button[onclick="showSection('${name}')"]`)?.classList.add('active');
+    document.querySelectorAll('.sidebar button').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.sidebar button[onclick*="showSection('${name}')"]`)?.classList.add('active');
+    renderAll();
+}
+
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+
+// ===== RENDER ALL =====
+var pageState = {};
+
+function setPage(type, p) {
+    pageState[type] = p;
+    renderAll();
+}
+
+function paginatedTableHtml(items, renderItem, type, perPage) {
+    perPage = perPage || 10;
+    var total = items.length;
+    var totalPages = Math.max(1, Math.ceil(total / perPage));
+    var page = pageState[type] || 1;
+    if (page > totalPages) page = totalPages;
+    pageState[type] = page;
+    var start = (page - 1) * perPage;
+    var sliced = items.slice(start, start + perPage);
+    var rows = sliced.map(renderItem).join('');
+    var html = '<tbody>' + rows + '</tbody>';
+    if (totalPages > 1) {
+        html += '<tfoot><tr><td colspan="10" style="text-align:center;padding:10px 0">';
+        html += '<div class="pagination">';
+        html += '<button class="page-btn" onclick="setPage(\'' + type + '\',' + (page - 1) + ')" ' + (page <= 1 ? 'disabled' : '') + '>Prev</button>';
+        for (var p = 1; p <= totalPages; p++) {
+            html += '<button class="page-btn' + (p === page ? ' active' : '') + '" onclick="setPage(\'' + type + '\',' + p + ')">' + p + '</button>';
+        }
+        html += '<button class="page-btn" onclick="setPage(\'' + type + '\',' + (page + 1) + ')" ' + (page >= totalPages ? 'disabled' : '') + '>Next</button>';
+        html += '</div></td></tr></tfoot>';
+    }
+    return html;
+}
+function renderAll() {
+    renderDashboard();
+    renderProjects();
+    renderBlogs();
+    renderTestimonials();
+    renderSubmissions();
+    renderServices();
+    renderStatsForm();
+    loadFirebaseConfig();
+    loadSettings();
+}
+
+function renderDashboard() {
+    document.getElementById('dashProjects').textContent = data.projects.length;
+    document.getElementById('dashBlogs').textContent = data.blogs.length;
+    document.getElementById('dashTestimonials').textContent = data.testimonials.length;
+    document.getElementById('dashSubmissions').textContent = (data.submissions || []).length;
+    document.getElementById('dashServices').textContent = data.services.length;
+}
+
+// ===== PROJECTS =====
+function renderProjects() {
+    const c = document.getElementById('projectsContainer');
+    if (!data.projects.length) {
+        c.innerHTML = '<div class="empty-msg">No projects yet. Click "Add Project" to create one.</div>';
+        return;
+    }
+    c.innerHTML = '<div class="table-wrap">' + `<table class="data-table"><thead><tr>
+        <th>Title</th><th>Category</th><th>Tech</th><th class="actions">Actions</th>
+    </tr></thead>${paginatedTableHtml(data.projects, (p, i) => `<tr>
+        <td>${esc(p.title)}</td>
+        <td>${esc(p.category)}</td>
+        <td>${(p.techs || []).slice(0, 3).join(', ')}${(p.techs || []).length > 3 ? '…' : ''}</td>
+        <td class="actions">
+            ${moveBtnsHtml('projects', p.id, i, data.projects)}
+            <button class="edit-btn" onclick="previewSaved('projects','${p.id}')" title="Preview">&#128065;</button>
+            <button class="edit-btn" onclick="openProjectForm('${p.id}')">Edit</button>
+            <button class="del-btn" onclick="deleteItem('projects','${p.id}')">Delete</button>
+        </td>
+    </tr>`, 'projects')}</table>` + '</div>';
+}
+
+function imagePickerHtml(current, label) {
+    const prevStyle = current ? 'style="max-width:100%;max-height:80px;border-radius:6px;margin-top:6px;object-fit:cover"' : 'style="display:none"';
+    return `
+        <label>${label || 'Image'}</label>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+            <input type="text" id="fImage" value="${esc(current || '')}" placeholder="Paste URL or path..." style="flex:1;margin-bottom:0">
+            <button type="button" class="btn btn-ghost" onclick="document.getElementById('fImageUpload').click()" style="white-space:nowrap;padding:8px 14px">Upload</button>
+        </div>
+        <input type="file" id="fImageUpload" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+        <div id="fImagePreview" ${prevStyle}>
+            ${current ? '<img src="' + escAttr(current) + '" style="max-width:100%;max-height:80px;border-radius:6px;object-fit:cover;background:#1e1e1e">' : ''}
+        </div>
+    `;
+}
+
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const dataUrl = e.target.result;
+        const input = document.getElementById('fImage');
+        if (input) {
+            input.value = dataUrl;
+            // Trigger preview update
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    };
+    reader.readAsDataURL(file);
+    // Reset so the same file can be re-selected
+    event.target.value = '';
+}
+
+// Live preview for image URL field
+document.addEventListener('input', function(e) {
+    if (e.target && e.target.id === 'fImage') {
+        const preview = document.getElementById('fImagePreview');
+        if (preview) {
+            const val = e.target.value.trim();
+            if (val) {
+                preview.innerHTML = '<img src="' + escAttr(val) + '" style="max-width:100%;max-height:80px;border-radius:6px;object-fit:cover;background:#1e1e1e" onerror="this.parentElement.innerHTML=\'<span style=color:#e74c3c;font-size:0.8rem>Invalid image</span>\'">';
+                preview.style.display = '';
+            } else {
+                preview.innerHTML = '';
+                preview.style.display = 'none';
+            }
+        }
+    }
+});
+
+function openProjectForm(id) {
+    editingType = 'projects';
+    const item = id ? data.projects.find(p => p.id === id) : null;
+    editingId = id || null;
+    chipTemp = item ? [...(item.techs || [])] : [];
+    document.getElementById('formTitle').textContent = item ? 'Edit Project' : 'Add Project';
+    document.getElementById('formBody').innerHTML = `
+        <label>Title</label>
+        <input type="text" id="fTitle" value="${esc(item?.title || '')}">
+        <label>Category</label>
+        <select id="fCategory">
+            <option value="websites" ${item?.category === 'websites' ? 'selected' : ''}>Websites</option>
+            <option value="graphic-design" ${item?.category === 'graphic-design' ? 'selected' : ''}>Graphic Design</option>
+            <option value="logos" ${item?.category === 'logos' ? 'selected' : ''}>Logos</option>
+            <option value="posters" ${item?.category === 'posters' ? 'selected' : ''}>Posters</option>
+        </select>
+        <label>Description</label>
+        <textarea id="fDesc">${esc(item?.description || '')}</textarea>
+        ${imagePickerHtml(item?.image || '', 'Project Image')}
+        <label>Technologies</label>
+        <div class="add-chip-row">
+            <input type="text" id="chipInput" placeholder="e.g. React" onkeydown="if(event.key==='Enter'){event.preventDefault();addChip();}">
+            <button onclick="addChip()">Add</button>
+        </div>
+        <div class="chip-list" id="chipList">${chipTemp.map(c => `<span class="chip">${esc(c)}<span class="remove-chip" onclick="removeChip('${esc(c)}')">×</span></span>`).join('')}</div>
+    `;
+    document.getElementById('formOverlay').classList.add('open');
+}
+
+// ===== BLOGS =====
+function renderBlogs() {
+    const c = document.getElementById('blogsContainer');
+    if (!data.blogs.length) {
+        c.innerHTML = '<div class="empty-msg">No blog posts yet.</div>';
+        return;
+    }
+    c.innerHTML = '<div class="table-wrap">' + `<table class="data-table"><thead><tr>
+        <th>Title</th><th>Date</th><th>Tag</th><th class="actions">Actions</th>
+    </tr></thead>${paginatedTableHtml(data.blogs, (b, i) => `<tr>
+        <td>${esc(b.title)}</td>
+        <td>${esc(b.date || '')}</td>
+        <td>${esc(b.tag || '')}</td>
+        <td class="actions">
+            ${moveBtnsHtml('blogs', b.id, i, data.blogs)}
+            <button class="edit-btn" onclick="previewSaved('blogs','${b.id}')" title="Preview">&#128065;</button>
+            <button class="edit-btn" onclick="openBlogForm('${b.id}')">Edit</button>
+            <button class="del-btn" onclick="deleteItem('blogs','${b.id}')">Delete</button>
+        </td>
+    </tr>`, 'blogs')}</table>` + '</div>';
+}
+
+function openBlogForm(id) {
+    editingType = 'blogs';
+    const item = id ? data.blogs.find(b => b.id === id) : null;
+    editingId = id || null;
+    document.getElementById('formTitle').textContent = item ? 'Edit Blog Post' : 'Add Blog Post';
+    document.getElementById('formBody').innerHTML = `
+        <label>Title</label>
+        <input type="text" id="fTitle" value="${esc(item?.title || '')}">
+        <div class="form-row">
+            <div><label>Date</label><input type="text" id="fDate" value="${esc(item?.date || '')}" placeholder="e.g. Jun 10, 2025"></div>
+            <div><label>Read Time</label><input type="text" id="fReadTime" value="${esc(item?.readTime || '')}" placeholder="e.g. 5 min read"></div>
+        </div>
+        <label>Tag</label>
+        <input type="text" id="fTag" value="${esc(item?.tag || '')}" placeholder="e.g. Process">
+        ${imagePickerHtml(item?.image || '', 'Blog Image')}
+        <label>Description</label>
+        <textarea id="fDesc" rows="3">${esc(item?.description || '')}</textarea>
+        <label>Full Content (article body)</label>
+        ${richEditorHtml(item?.content || '')}
+    `;
+    document.getElementById('formOverlay').classList.add('open');
+}
+
+// ===== TESTIMONIALS =====
+function renderTestimonials() {
+    const c = document.getElementById('testimonialsContainer');
+    if (!data.testimonials.length) {
+        c.innerHTML = '<div class="empty-msg">No testimonials yet.</div>';
+        return;
+    }
+    c.innerHTML = '<div class="table-wrap">' + `<table class="data-table"><thead><tr>
+        <th>Author</th><th>Company</th><th>Preview</th><th class="actions">Actions</th>
+    </tr></thead>${paginatedTableHtml(data.testimonials, (t, i) => `<tr>
+        <td>${esc(t.author)}</td>
+        <td>${esc(t.role || '')}</td>
+        <td>${esc(t.text?.slice(0, 50) || '')}${(t.text?.length || 0) > 50 ? '…' : ''}</td>
+        <td class="actions">
+            ${moveBtnsHtml('testimonials', t.id, i, data.testimonials)}
+            <button class="edit-btn" onclick="previewSaved('testimonials','${t.id}')" title="Preview">&#128065;</button>
+            <button class="edit-btn" onclick="openTestimonialForm('${t.id}')">Edit</button>
+            <button class="del-btn" onclick="deleteItem('testimonials','${t.id}')">Delete</button>
+        </td>
+    </tr>`, 'testimonials')}</table>` + '</div>';
+}
+
+function openTestimonialForm(id) {
+    editingType = 'testimonials';
+    const item = id ? data.testimonials.find(t => t.id === id) : null;
+    editingId = id || null;
+    document.getElementById('formTitle').textContent = item ? 'Edit Testimonial' : 'Add Testimonial';
+    document.getElementById('formBody').innerHTML = `
+        <label>Author Name</label>
+        <input type="text" id="fAuthor" value="${esc(item?.author || '')}">
+        <div class="form-row">
+            <div><label>Company / Role</label><input type="text" id="fRole" value="${esc(item?.role || '')}"></div>
+            <div><label>Initial</label><input type="text" id="fInitial" value="${esc(item?.initial || '')}" maxlength="2" placeholder="e.g. S"></div>
+        </div>
+        ${imagePickerHtml(item?.image || '', 'Avatar Image (optional)')}
+        <label>Testimonial Text</label>
+        <textarea id="fText">${esc(item?.text || '')}</textarea>
+    `;
+    document.getElementById('formOverlay').classList.add('open');
+}
+
+// ===== SERVICES =====
+function renderServices() {
+    const c = document.getElementById('servicesContainer');
+    if (!data.services.length) {
+        c.innerHTML = '<div class="empty-msg">No services yet.</div>';
+        return;
+    }
+    c.innerHTML = '<div class="table-wrap">' + `<table class="data-table"><thead><tr>
+        <th>Title</th><th>Tech</th><th class="actions">Actions</th>
+    </tr></thead>${paginatedTableHtml(data.services, (s, i) => `<tr>
+        <td>${esc(s.title)}</td>
+        <td>${(s.techs || []).join(', ')}</td>
+        <td class="actions">
+            ${moveBtnsHtml('services', s.id, i, data.services)}
+            <button class="edit-btn" onclick="previewSaved('services','${s.id}')" title="Preview">&#128065;</button>
+            <button class="edit-btn" onclick="openServiceForm('${s.id}')">Edit</button>
+            <button class="del-btn" onclick="deleteItem('services','${s.id}')">Delete</button>
+        </td>
+    </tr>`, 'services')}</table>` + '</div>';
+}
+
+function openServiceForm(id) {
+    editingType = 'services';
+    const item = id ? data.services.find(s => s.id === id) : null;
+    editingId = id || null;
+    chipTemp = item ? [...(item.techs || [])] : [];
+    document.getElementById('formTitle').textContent = item ? 'Edit Service' : 'Add Service';
+    document.getElementById('formBody').innerHTML = `
+        <label>Title</label>
+        <input type="text" id="fTitle" value="${esc(item?.title || '')}">
+        <label>Description</label>
+        <textarea id="fDesc">${esc(item?.description || '')}</textarea>
+        <label>Technologies / Tools</label>
+        <div class="add-chip-row">
+            <input type="text" id="chipInput" placeholder="e.g. Figma" onkeydown="if(event.key==='Enter'){event.preventDefault();addChip();}">
+            <button onclick="addChip()">Add</button>
+        </div>
+        <div class="chip-list" id="chipList">${chipTemp.map(c => `<span class="chip">${esc(c)}<span class="remove-chip" onclick="removeChip('${esc(c)}')">×</span></span>`).join('')}</div>
+    `;
+    document.getElementById('formOverlay').classList.add('open');
+}
+
+// ===== STATS =====
+function renderStatsForm() {
+    document.getElementById('statProjects').value = data.stats.projects;
+    document.getElementById('statClients').value = data.stats.clients;
+    document.getElementById('statYears').value = data.stats.years;
+    document.getElementById('statAwards').value = data.stats.awards;
+}
+
+function saveStats() {
+    data.stats = {
+        projects: parseInt(document.getElementById('statProjects').value) || 0,
+        clients: parseInt(document.getElementById('statClients').value) || 0,
+        years: parseInt(document.getElementById('statYears').value) || 0,
+        awards: parseInt(document.getElementById('statAwards').value) || 0
+    };
+    saveData();
+    showToast('Stats saved', 'success');
+}
+
+// ===== FORM HELPERS =====
+function addChip() {
+    const input = document.getElementById('chipInput');
+    const val = input.value.trim();
+    if (val && !chipTemp.includes(val)) {
+        chipTemp.push(val);
+        const list = document.getElementById('chipList');
+        list.innerHTML = chipTemp.map(c => `<span class="chip">${esc(c)}<span class="remove-chip" onclick="removeChip('${esc(c)}')">×</span></span>`).join('');
+        input.value = '';
+        input.focus();
+    }
+}
+
+function removeChip(val) {
+    chipTemp = chipTemp.filter(c => c !== val);
+    const list = document.getElementById('chipList');
+    if (list) list.innerHTML = chipTemp.map(c => `<span class="chip">${esc(c)}<span class="remove-chip" onclick="removeChip('${esc(c)}')">×</span></span>`).join('');
+}
+
+function getFormFields() {
+    const title = document.getElementById('fTitle')?.value?.trim() || '';
+    const desc = document.getElementById('fDesc')?.value?.trim() || '';
+    return { title, desc };
+}
+
+function saveForm() {
+    const fields = getFormFields();
+    if (editingType !== 'testimonials' && !fields.title) { showToast('Title is required', 'error'); return; }
+
+    switch (editingType) {
+        case 'projects': saveProject(fields); break;
+        case 'blogs': saveBlog(fields); break;
+        case 'testimonials': saveTestimonial(fields); break;
+        case 'services': saveService(fields); break;
+    }
+}
+
+function saveProject(fields) {
+    const category = document.getElementById('fCategory')?.value || 'websites';
+    const image = document.getElementById('fImage')?.value?.trim() || '';
+    const item = {
+        id: editingId || genId(),
+        title: fields.title,
+        description: fields.desc,
+        category,
+        techs: chipTemp,
+        image
+    };
+    if (editingId) {
+        const idx = data.projects.findIndex(p => p.id === editingId);
+        if (idx >= 0) data.projects[idx] = item;
+    } else {
+        data.projects.push(item);
+    }
+    saveData();
+    closeForm();
+    renderProjects();
+    renderDashboard();
+    showToast(editingId ? 'Project updated' : 'Project added', 'success');
+}
+
+function saveBlog(fields) {
+    const date = document.getElementById('fDate')?.value?.trim() || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const readTime = document.getElementById('fReadTime')?.value?.trim() || '3 min read';
+    const tag = document.getElementById('fTag')?.value?.trim() || 'General';
+    const image = document.getElementById('fImage')?.value?.trim() || '';
+    const content = getEditorContent();
+    const item = {
+        id: editingId || genId(),
+        title: fields.title,
+        description: fields.desc,
+        content,
+        date,
+        readTime,
+        tag,
+        image
+    };
+    if (editingId) {
+        const idx = data.blogs.findIndex(b => b.id === editingId);
+        if (idx >= 0) data.blogs[idx] = item;
+    } else {
+        data.blogs.push(item);
+    }
+    saveData();
+    closeForm();
+    renderBlogs();
+    renderDashboard();
+    showToast(editingId ? 'Blog updated' : 'Blog added', 'success');
+}
+
+function saveTestimonial(fields) {
+    const author = document.getElementById('fAuthor')?.value?.trim() || '';
+    const role = document.getElementById('fRole')?.value?.trim() || '';
+    const initial = document.getElementById('fInitial')?.value?.trim() || (author ? author[0] : '?');
+    const text = document.getElementById('fText')?.value?.trim() || '';
+    const image = document.getElementById('fImage')?.value?.trim() || '';
+    if (!author) { showToast('Author name is required', 'error'); return; }
+    if (!text) { showToast('Testimonial text is required', 'error'); return; }
+    const item = {
+        id: editingId || genId(),
+        text,
+        author,
+        role,
+        initial,
+        image
+    };
+    if (editingId) {
+        const idx = data.testimonials.findIndex(t => t.id === editingId);
+        if (idx >= 0) data.testimonials[idx] = item;
+    } else {
+        data.testimonials.push(item);
+    }
+    saveData();
+    closeForm();
+    renderTestimonials();
+    renderDashboard();
+    showToast(editingId ? 'Testimonial updated' : 'Testimonial added', 'success');
+}
+
+function saveService(fields) {
+    const item = {
+        id: editingId || genId(),
+        title: fields.title,
+        description: fields.desc,
+        techs: chipTemp
+    };
+    if (editingId) {
+        const idx = data.services.findIndex(s => s.id === editingId);
+        if (idx >= 0) data.services[idx] = item;
+    } else {
+        data.services.push(item);
+    }
+    saveData();
+    closeForm();
+    renderServices();
+    renderDashboard();
+    showToast(editingId ? 'Service updated' : 'Service added', 'success');
+}
+
+function closeForm() {
+    document.getElementById('formOverlay').classList.remove('open');
+    editingId = null;
+    editingType = null;
+    chipTemp = [];
+}
+
+// ===== SUBMISSIONS =====
+function renderSubmissions() {
+    renderSubmissionsWithFilter(window._subFilter || 'all');
+}
+
+function renderSubmissionsWithFilter(filter) {
+    const c = document.getElementById('submissionsContainer');
+    let subs = data.submissions || [];
+    if (filter === 'unread') subs = subs.filter(s => !s.read);
+    else if (filter === 'read') subs = subs.filter(s => s.read);
+    if (!subs.length) {
+        c.innerHTML = '<div class="empty-msg">No ' + (filter !== 'all' ? filter + ' ' : '') + 'submissions.</div>';
+        return;
+    }
+    c.innerHTML = '<div class="table-wrap">' + `<table class="data-table sub-table"><thead><tr>
+        <th style="width:130px">Date</th><th style="width:80px">Type</th><th style="width:120px">Name</th><th style="width:180px">Contact</th><th>Message</th><th class="actions" style="width:100px">Actions</th>
+    </tr></thead><tbody>${subs.map((s) => {
+        const isRead = s.read ? '' : 'style="font-weight:600;color:var(--gold)"';
+        const name = s.name || s.email || '—';
+        const email = s.email || '';
+        const phone = s.phone || '';
+        const msg = s.message || s.comment || '';
+        const msgShort = msg.slice(0, 50);
+        const hasMore = msg.length > 50;
+        const sid = s.id;
+        return `<tr class="sub-row${s.read ? ' read' : ' unread'}" data-sid="${sid}" onclick="toggleSubExpand(this)" ${isRead}>
+            <td>${esc(s.date || '')}</td>
+            <td>${esc(s.type || '')}</td>
+            <td>${esc(name)}</td>
+            <td>${esc(email || phone)}</td>
+            <td><span class="sub-msg-preview">${esc(msgShort)}${hasMore ? '…' : ''}</span><div class="sub-msg-full" style="display:none;margin-top:8px;padding:10px;background:#1a1a1a;border-radius:6px;color:var(--text);font-size:0.9rem;line-height:1.6;white-space:pre-wrap">${esc(msg)}</div></td>
+            <td class="actions" style="white-space:nowrap">
+                ${email ? '<button class="edit-btn" onclick="event.stopPropagation();replyToSub(\'' + escAttr(email) + '\')" title="Reply via email">&#9993;</button> ' : ''}
+                ${s.read ? '<button class="edit-btn" onclick="event.stopPropagation();markSubRead(' + sid + ',false)" title="Mark unread">&#9675;</button>' : '<button class="edit-btn" onclick="event.stopPropagation();markSubRead(' + sid + ',true)" title="Mark read">&#9679;</button>'}
+                <button class="del-btn" onclick="event.stopPropagation();deleteSubmission(' + sid + ')">&#10005;</button>
+            </td>
+        </tr>`;
+    }).join('')}</tbody></table>` + '</div>';
+}
+
+function toggleSubExpand(row) {
+    const full = row.querySelector('.sub-msg-full');
+    if (full) {
+        const isOpen = full.style.display !== 'none';
+        full.style.display = isOpen ? 'none' : 'block';
+    }
+}
+
+function markSubRead(sid, read) {
+    const subs = data.submissions || [];
+    const sub = subs.find(s => s.id === sid);
+    if (sub) {
+        sub.read = read;
+        saveData();
+        renderSubmissions();
+        showToast(read ? 'Marked as read' : 'Marked as unread', 'success');
+    }
+}
+
+function replyToSub(email) {
+    window.open('mailto:' + email);
+}
+
+function setSubFilter(filter) {
+    window._subFilter = filter;
+    document.querySelectorAll('#subFilterTabs .filter-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.filter === filter);
+    });
+    renderSubmissionsWithFilter(filter);
+}
+
+function deleteSubmission(sid) {
+    if (!confirm('Delete this submission?')) return;
+    const idx = (data.submissions || []).findIndex(s => s.id === sid);
+    if (idx < 0) return;
+    data.submissions.splice(idx, 1);
+    saveData();
+    renderSubmissions();
+    renderDashboard();
+    showToast('Submission deleted', 'success');
+}
+
+function clearSubmissions() {
+    if (!confirm('Delete ALL submissions? This cannot be undone.')) return;
+    data.submissions = [];
+    saveData();
+    renderSubmissions();
+    renderDashboard();
+    showToast('All submissions cleared', 'success');
+}
+
+// ===== SITE SETTINGS =====
+function loadSettings() {
+    const s = data.settings || defaultData().settings;
+    (document.getElementById('setSiteName') || {}).value = s.siteName || '';
+    (document.getElementById('setTagline') || {}).value = s.tagline || '';
+    (document.getElementById('setMetaDesc') || {}).value = s.metaDesc || '';
+    (document.getElementById('setGithub') || {}).value = s.github || '';
+    (document.getElementById('setLinkedin') || {}).value = s.linkedin || '';
+    (document.getElementById('setWhatsapp') || {}).value = s.whatsapp || '';
+    (document.getElementById('setResume') || {}).value = s.resumeUrl || '';
+    var status = document.getElementById('resumeStatus');
+    if (status) {
+        if (s.resumeUrl && s.resumeUrl.startsWith('data:')) {
+            var size = Math.round((s.resumeUrl.length * 3 / 4) / 1024);
+            status.innerHTML = 'PDF stored in localStorage (' + size + ' KB)';
+        } else if (s.resumeUrl) {
+            status.innerHTML = 'Using external URL: <a href="' + escAttr(s.resumeUrl) + '" target="_blank" style="color:var(--gold)">view</a>';
+        } else {
+            status.innerHTML = '';
+        }
+    }
+}
+
+function saveSiteInfo() {
+    if (!data.settings) data.settings = {};
+    data.settings.siteName = document.getElementById('setSiteName').value.trim();
+    data.settings.tagline = document.getElementById('setTagline').value.trim();
+    data.settings.metaDesc = document.getElementById('setMetaDesc').value.trim();
+    saveData();
+    showToast('Site identity saved', 'success');
+}
+
+function saveSocial(key) {
+    if (!data.settings) data.settings = {};
+    var map = { github: 'setGithub', linkedin: 'setLinkedin', whatsapp: 'setWhatsapp' };
+    var id = map[key];
+    if (!id) return;
+    data.settings[key] = document.getElementById(id).value.trim();
+    saveData();
+    showToast(key.charAt(0).toUpperCase() + key.slice(1) + ' URL saved', 'success');
+}
+
+function saveResumeUrl() {
+    if (!data.settings) data.settings = {};
+    data.settings.resumeUrl = document.getElementById('setResume').value.trim();
+    saveData();
+    showToast('Resume URL saved', 'success');
+}
+
+function uploadResume() {
+    const fileInput = document.getElementById('setResumeFile');
+    const status = document.getElementById('resumeStatus');
+    const file = fileInput.files[0];
+    if (!file) { showToast('Select a PDF file first', 'error'); return; }
+    if (file.type !== 'application/pdf') { showToast('Only PDF files are accepted', 'error'); return; }
+    if (file.size > 5 * 1024 * 1024) { showToast('File too large (max 5MB)', 'error'); return; }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('setResume').value = e.target.result;
+        status.innerHTML = 'Loaded: <strong>' + esc(file.name) + '</strong> (' + (file.size / 1024).toFixed(1) + ' KB). Click "Save Resume URL" to persist.';
+        showToast('File loaded. Save settings to persist.', 'success');
+    };
+    reader.onerror = function() { showToast('Error reading file', 'error'); };
+    reader.readAsDataURL(file);
+}
+
+// ===== DELETE =====
+function deleteItem(type, id) {
+    if (!confirm('Delete this item? This cannot be undone.')) return;
+    const idx = data[type].findIndex(i => i.id === id);
+    if (idx >= 0) data[type].splice(idx, 1);
+    saveData();
+    renderAll();
+    showToast('Item deleted', 'success');
+}
+
+function moveItem(type, id, dir) {
+    const arr = data[type];
+    const idx = arr.findIndex(i => i.id === id);
+    if (idx < 0) return;
+    const swap = idx + dir;
+    if (swap < 0 || swap >= arr.length) return;
+    [arr[idx], arr[swap]] = [arr[swap], arr[idx]];
+    saveData();
+    renderAll();
+}
+
+function moveBtnsHtml(type, id, idx, arr) {
+    return `<button class="move-btn" onclick="moveItem('${type}','${id}',-1)" ${idx === 0 ? 'disabled' : ''} title="Move up">&#9650;</button>
+            <button class="move-btn" onclick="moveItem('${type}','${id}',1)" ${idx === arr.length - 1 ? 'disabled' : ''} title="Move down">&#9660;</button>`;
+}
+
+// ===== PREVIEW =====
+function previewCurrent() {
+    var title = document.getElementById('fTitle')?.value?.trim() || 'Untitled';
+    var desc = document.getElementById('fDesc')?.value?.trim() || '';
+    var image = document.getElementById('fImage')?.value?.trim() || '';
+    var content = '';
+    if (editingType === 'blogs') {
+        content = getEditorContent();
+    } else {
+        content = desc.replace(/\n/g, '<br>');
+    }
+    var imgHtml = image ? '<img src="' + escAttr(image) + '" alt="' + escAttr(title) + '">' : '';
+    var dateTag = '';
+    if (editingType === 'blogs') {
+        var date = document.getElementById('fDate')?.value?.trim() || '';
+        var tag = document.getElementById('fTag')?.value?.trim() || '';
+        if (date || tag) dateTag = '<div class="meta">' + esc(date) + (date && tag ? ' &middot; ' : '') + esc(tag) + '</div>';
+    }
+    document.getElementById('previewContent').innerHTML = '<h1>' + esc(title) + '</h1>' + dateTag + imgHtml + '<div>' + content + '</div>';
+    document.getElementById('previewOverlay').classList.add('open');
+}
+
+function closePreview() {
+    document.getElementById('previewOverlay').classList.remove('open');
+}
+
+function previewSaved(type, id) {
+    var arr = data[type];
+    if (!arr) return;
+    var item = arr.find(function(i) { return i.id === id; });
+    if (!item) { showToast('Item not found', 'error'); return; }
+    var title = item.title || item.author || 'Untitled';
+    var desc = item.description || item.text || '';
+    var image = item.image || '';
+    var imgHtml = image ? '<img src="' + escAttr(image) + '" alt="' + escAttr(title) + '">' : '';
+    var content = item.content || desc.replace(/\n/g, '<br>');
+    var dateTag = '';
+    if (type === 'blogs' && (item.date || item.tag)) {
+        dateTag = '<div class="meta">' + esc(item.date || '') + (item.date && item.tag ? ' &middot; ' : '') + esc(item.tag || '') + '</div>';
+    }
+    document.getElementById('previewContent').innerHTML = '<h1>' + esc(title) + '</h1>' + dateTag + imgHtml + '<div>' + content + '</div>';
+    document.getElementById('previewOverlay').classList.add('open');
+}
+
+// ===== SETTINGS =====
+function changePassword() {
+    const np = document.getElementById('newPwd').value;
+    const cp = document.getElementById('confirmPwd').value;
+    if (!np) { showToast('Enter a new password', 'error'); return; }
+    if (np !== cp) { showToast('Passwords do not match', 'error'); return; }
+    if (np.length < 4) { showToast('Password must be at least 4 characters', 'error'); return; }
+    data.password = np;
+    saveData();
+    document.getElementById('newPwd').value = '';
+    document.getElementById('confirmPwd').value = '';
+    showToast('Password updated', 'success');
+}
+
+function exportData() {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'wizzy-admin-backup.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Data exported', 'success');
+}
+
+function importData() {
+    const file = document.getElementById('importFile').files[0];
+    if (!file) { showToast('Select a JSON file first', 'error'); return; }
+    if (!confirm('This will replace ALL current data. Continue?')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const imported = JSON.parse(e.target.result);
+            if (!imported.projects || !imported.blogs) {
+                showToast('Invalid data file', 'error');
+                return;
+            }
+            data = imported;
+            saveData();
+            renderAll();
+            document.getElementById('importFile').value = '';
+            showToast('Data imported successfully', 'success');
+        } catch {
+            showToast('Invalid JSON file', 'error');
+        }
+    };
+    reader.readAsText(file);
+}
+
+function resetData() {
+    if (!confirm('Delete ALL admin data? This cannot be undone.')) return;
+    if (!confirm('Are you sure? All projects, blogs, testimonials and services will be lost.')) return;
+    data = defaultData();
+    saveData();
+    renderAll();
+    showToast('All data reset', 'success');
+}
+
+// ===== TOAST =====
+function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type + ' show';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ===== FIREBASE SYNC =====
+function syncToFirebase() {
+    if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isConfigured()) {
+        FirebaseSync.push(data).then(ok => {
+            if (ok) showToast('Synced to cloud', 'success');
+            else showToast('Sync failed', 'error');
+        });
+    }
+}
+
+function loadFirebaseConfig() {
+    if (typeof FirebaseSync === 'undefined') return;
+    const cfg = FirebaseSync.getConfig();
+    if (cfg) {
+        document.getElementById('fbApiKey').value = cfg.apiKey || '';
+        document.getElementById('fbAuthDomain').value = cfg.authDomain || '';
+        document.getElementById('fbProjectId').value = cfg.projectId || '';
+        document.getElementById('fbStorageBucket').value = cfg.storageBucket || '';
+        document.getElementById('fbMessagingSenderId').value = cfg.messagingSenderId || '';
+        document.getElementById('fbAppId').value = cfg.appId || '';
+        document.getElementById('fbDbUrl').value = FirebaseSync.getDbUrl() || '';
+        updateFirebaseStatus();
+    }
+}
+
+function updateFirebaseStatus() {
+    const el = document.getElementById('firebaseStatus');
+    if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isConfigured()) {
+        const cfg = FirebaseSync.getConfig();
+        el.textContent = 'Connected to project: ' + (cfg?.projectId || 'unknown');
+        el.style.color = '#27ae60';
+    } else {
+        el.textContent = 'Not configured';
+        el.style.color = 'var(--muted)';
+    }
+}
+
+function saveFirebaseConfig() {
+    if (typeof FirebaseSync === 'undefined') {
+        showToast('Firebase module not loaded', 'error');
+        return;
+    }
+    const cfg = {
+        apiKey: document.getElementById('fbApiKey').value.trim(),
+        authDomain: document.getElementById('fbAuthDomain').value.trim(),
+        projectId: document.getElementById('fbProjectId').value.trim(),
+        storageBucket: document.getElementById('fbStorageBucket').value.trim(),
+        messagingSenderId: document.getElementById('fbMessagingSenderId').value.trim(),
+        appId: document.getElementById('fbAppId').value.trim()
+    };
+    if (!cfg.apiKey || !cfg.projectId) {
+        showToast('apiKey and projectId are required', 'error');
+        return;
+    }
+    FirebaseSync.configure(cfg);
+    const dbUrl = document.getElementById('fbDbUrl').value.trim();
+    if (dbUrl) FirebaseSync.setDbUrl(dbUrl);
+    updateFirebaseStatus();
+    // Push current data to Firebase immediately
+    syncToFirebase();
+    showToast('Firebase config saved', 'success');
+}
+
+function clearFirebaseConfig() {
+    if (typeof FirebaseSync === 'undefined') return;
+    if (!confirm('Disconnect Firebase? Data will remain in localStorage.')) return;
+    localStorage.removeItem('wizzyFirebaseConfig');
+    localStorage.removeItem('wizzyRTDBUrl');
+    updateFirebaseStatus();
+    showToast('Firebase disconnected', 'success');
+}
+
+async function testFirebase() {
+    if (typeof FirebaseSync === 'undefined') { showToast('Firebase module not loaded', 'error'); return; }
+    showToast('Testing connection...', 'success');
+    try {
+        const result = await FirebaseSync.fetch();
+        if (result !== null) {
+            showToast('Connected! Found data in cloud.', 'success');
+        } else {
+            showToast('Connected! No data in cloud yet. Save something first.', 'success');
+        }
+    } catch (e) {
+        showToast('Connection failed: ' + e.message, 'error');
+    }
+}
+
+// ===== UTILITY =====
+function esc(s) {
+    if (typeof s !== 'string') return '';
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+function escAttr(s) {
+    if (typeof s !== 'string') return '';
+    return s.replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+// ===== LOADING STATE =====
+function showLoading() {
+    const el = document.getElementById('fbLoading');
+    if (el) el.classList.add('show');
+}
+function hideLoading() {
+    const el = document.getElementById('fbLoading');
+    if (el) el.classList.remove('show');
+}
+
+// ===== KEYBOARD SHORTCUTS =====
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { closeForm(); if (document.getElementById('sidebar').classList.contains('open')) toggleSidebar(); }
+    if (e.ctrlKey && e.key >= '1' && e.key <= '7') {
+        e.preventDefault();
+        const sections = ['dashboard','projects','blogs','testimonials','submissions','services','stats'];
+        const idx = parseInt(e.key) - 1;
+        if (idx < sections.length && document.getElementById('adminHeader').style.display !== 'none') {
+            showSection(sections[idx]);
+        }
+    }
+});
+</script>
+</body>
+</html>

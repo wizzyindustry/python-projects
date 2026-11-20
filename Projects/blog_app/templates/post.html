@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="post-full">
+    <h2>{{ post.title }}</h2>
+    <div class="post-meta">
+        👤 {{ post.author.name }} &nbsp;|&nbsp;
+        🕒 {{ post.date.strftime("%B %d, %Y at %I:%M %p") }}
+    </div>
+    <div class="post-content">
+        {{ post.content }}
+    </div>
+    <div class="post-actions">
+        <a href="/" class="btn">⬅ Back to Home</a>
+        {% if current_user.is_authenticated and post.author == current_user %}
+            <a href="/delete/{{ post.id }}" class="btn delete"
+               onclick="return confirm('Delete this post?')">🗑 Delete Post</a>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

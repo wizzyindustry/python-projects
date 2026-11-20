@@ -1,0 +1,23 @@
+{
+    "display":  "standalone",
+    "icons":  [
+                  {
+                      "purpose":  "any maskable",
+                      "type":  "image/png",
+                      "sizes":  "192x192",
+                      "src":  "/icons/icon-192.png"
+                  },
+                  {
+                      "purpose":  "any maskable",
+                      "type":  "image/png",
+                      "sizes":  "512x512",
+                      "src":  "/icons/icon-512.png"
+                  }
+              ],
+    "background_color":  "#0a0a0a",
+    "theme_color":  "#d4a017",
+    "name":  "Wizzy inc - Portfolio",
+    "description":  "Portfolio of Wizzy inc - web development, graphic design, logos and posters.",
+    "start_url":  "/home.html",
+    "short_name":  "Wizzy"
+}

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login App</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav>
+        <h1>🔐 Flask Login App</h1>
+        {% if current_user.is_authenticated %}
+            <span>Welcome, {{ current_user.name }}!</span>
+            <a href="/logout">Logout</a>
+        {% else %}
+            <a href="/">Login</a>
+            <a href="/register">Register</a>
+        {% endif %}
+    </nav>
+
+    <div class="container">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
